@@ -240,6 +240,133 @@ class TestMensagemFiltroInvalido(BaseCSVTest):
         )
 
 
+CSV_MULTI = (
+    "nome,idade,cidade,salario\n"
+    "a,30,SP,1000\n"
+    "b,30,RJ,2000\n"
+    "c,40,SP,4000\n"
+    "d, 30 , SP ,3000\n"
+    "e,30,SP,\n"
+)
+
+
+class TestCalcularMediaMultiplosFiltros(BaseCSVTest):
+    def setUp(self):
+        super().setUp()
+        self.caminho = self.criar_csv(CSV_MULTI)
+
+    def test_dois_filtros_logica_and(self):
+        # a e d satisfazem idade=30 E cidade=SP; e tem salario vazio
+        self.assertEqual(
+            analise.calcular_media(
+                self.caminho, "salario", [("idade", "30"), ("cidade", "SP")]
+            ),
+            2000.0,
+        )
+
+    def test_linha_que_falha_um_filtro_e_descartada(self):
+        # b tem idade=30 mas cidade=RJ; c tem cidade=SP mas idade=40
+        self.assertEqual(
+            analise.calcular_media(
+                self.caminho, "salario", [("idade", "30"), ("cidade", "RJ")]
+            ),
+            2000.0,
+        )
+        self.assertEqual(
+            analise.calcular_media(
+                self.caminho, "salario", [("idade", "40"), ("cidade", "SP")]
+            ),
+            4000.0,
+        )
+
+    def test_ordem_dos_filtros_nao_importa(self):
+        self.assertEqual(
+            analise.calcular_media(
+                self.caminho, "salario", [("cidade", "SP"), ("idade", "30")]
+            ),
+            analise.calcular_media(
+                self.caminho, "salario", [("idade", "30"), ("cidade", "SP")]
+            ),
+        )
+
+    def test_lista_com_um_filtro_igual_a_tupla(self):
+        self.assertEqual(
+            analise.calcular_media(self.caminho, "salario", [("idade", "30")]),
+            analise.calcular_media(self.caminho, "salario", ("idade", "30")),
+        )
+
+    def test_lista_vazia_igual_sem_filtro(self):
+        self.assertEqual(
+            analise.calcular_media(self.caminho, "salario", []),
+            analise.calcular_media(self.caminho, "salario"),
+        )
+
+    def test_nenhuma_linha_restante(self):
+        with self.assertRaises(ValueError) as ctx:
+            analise.calcular_media(
+                self.caminho, "salario", [("idade", "40"), ("cidade", "RJ")]
+            )
+        mensagem = str(ctx.exception)
+        self.assertIn("Nenhuma linha", mensagem)
+        self.assertIn("idade=40", mensagem)
+        self.assertIn("cidade=RJ", mensagem)
+
+    def test_mesma_coluna_com_valores_diferentes_nao_sobra_nada(self):
+        with self.assertRaises(ValueError):
+            analise.calcular_media(
+                self.caminho, "salario", [("cidade", "SP"), ("cidade", "RJ")]
+            )
+
+    def test_linhas_restantes_somente_vazias(self):
+        caminho = self.criar_csv("idade,cidade,salario\n30,SP,\n30,RJ,10\n")
+        with self.assertRaises(ValueError) as ctx:
+            analise.calcular_media(caminho, "salario", [("idade", "30"), ("cidade", "SP")])
+        self.assertIn("Nenhum valor numérico", str(ctx.exception))
+
+    def test_segunda_coluna_de_filtro_inexistente(self):
+        with self.assertRaises(ValueError) as ctx:
+            analise.calcular_media(
+                self.caminho, "salario", [("idade", "30"), ("nada", "1")]
+            )
+        self.assertIn("nada", str(ctx.exception))
+
+
+class TestMainMultiplosFiltros(BaseCSVTest):
+    executar = TestMain.executar
+
+    def test_dois_filtros_sucesso(self):
+        caminho = self.criar_csv(CSV_MULTI)
+        codigo, out, err = self.executar(
+            [caminho, "salario",
+             "--filtrar-coluna", "idade=30", "--filtrar-coluna", "cidade=SP"]
+        )
+        self.assertEqual(codigo, 0)
+        self.assertEqual(out.strip(), "2000.0")
+        self.assertEqual(err, "")
+
+    def test_nenhuma_linha_restante_sai_com_1(self):
+        caminho = self.criar_csv(CSV_MULTI)
+        codigo, out, err = self.executar(
+            [caminho, "salario",
+             "--filtrar-coluna", "idade=40", "--filtrar-coluna", "cidade=RJ"]
+        )
+        self.assertEqual(codigo, 1)
+        self.assertEqual(out, "")
+        self.assertIn("Erro:", err)
+        self.assertIn("idade=40, cidade=RJ", err)
+
+    def test_segundo_filtro_mal_formatado_sai_com_2(self):
+        caminho = self.criar_csv(CSV_MULTI)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as ctx:
+            analise.main(
+                [caminho, "salario",
+                 "--filtrar-coluna", "idade=30", "--filtrar-coluna", "cidadeSP"]
+            )
+        self.assertEqual(ctx.exception.code, 2)
+        self.assertIn("use o formato coluna=valor", err.getvalue())
+
+
 class TestArquivoComBOM(BaseCSVTest):
     def setUp(self):
         super().setUp()

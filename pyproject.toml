@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "csv-mean-filter"
-version = "0.1.0"
+version = "0.2.0"
 description = "CLI em Python para calcular a média de colunas CSV com filtros dinâmicos, zero dependências e 36 testes unitários."
 readme = "README.md"
 requires-python = ">=3.10"
