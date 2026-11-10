@@ -1,3 +1,6 @@
+[![PyPI version](https://img.shields.io/pypi/v/csv-mean-filter.svg)](https://pypi.org/project/csv-mean-filter/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 # analise
 
 Script de linha de comando em Python que lê um arquivo CSV e calcula a média de uma coluna numérica, com filtro opcional por valor de outra coluna.
@@ -23,6 +26,29 @@ Não há pacotes para instalar. Basta clonar o repositório:
 git clone <url-do-repositorio>
 cd <pasta-do-repositorio>
 ```
+
+## Instalação via pip
+
+O projeto também pode ser instalado como pacote, o que disponibiliza o comando `csv-mean` no terminal. Na raiz do repositório:
+
+```bash
+pip install .
+```
+
+Futuramente, quando o pacote estiver publicado no PyPI:
+
+```bash
+pip install csv-mean-filter
+```
+
+Depois de instalado, use `csv-mean` no lugar de `python src/analise.py`:
+
+```bash
+$ csv-mean dados.csv salario --filtrar-coluna idade=30
+1500.0
+```
+
+Recomenda-se instalar dentro de um ambiente virtual (`python -m venv .venv`).
 
 ## Uso
 
@@ -100,3 +126,4 @@ tests/test_analise.py    # testes unitários
 ## Licença
 
 Distribuído sob a licença MIT. Veja o arquivo [LICENSE](LICENSE).
+
