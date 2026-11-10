@@ -1,0 +1,20 @@
+# Ruflo local secrets and runtime data
+.env
+.env.local
+.env.*.local
+.claude-flow/data/
+.claude-flow/logs/
+.claude-flow/sessions/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Ruflo / Claude Code (ferramentas locais)
+.claude/
+.claude-flow/
+.swarm/
+.mcp.json
+CLAUDE.md
+iniciar_ruflo.bat
